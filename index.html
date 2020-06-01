@@ -1,0 +1,252 @@
+<html>
+<head>
+<title>主页</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+
+<!--<script type="text/javascript" src="./jquery.min.js"></script>-->
+</head>
+
+<body>
+	<div style='width:500px;margin-left: 30%;margin-top: 50px;'>
+	<span id='chrome_sp' style="color:red; font-size: 16; display:block;">请使用chrome浏览器，并以<a target='_blank' href='https://blog.csdn.net/Umbrella_Um/article/details/98222981'>disable-web-security</a>模式启动chrome</span>
+	<div style='width:100%;'>
+		<textarea id='text1' rows='15' cols='80' placeholder="粘贴处"></textarea>
+	</div>
+	<div style='width:100%;'>
+		<button style="float:right; width: 60px;height: 30px; margin-top:10px; margin-bottom: 10px; margin-right: 30px;"onclick="doencode()">解析</button>
+	</div>
+	
+	<div id="target" style="width:100%; float: left"></div>
+</div>
+
+
+	
+
+
+
+<body>
+
+
+<script>
+function is_chrome() {
+	return false;
+    var userAgent = navigator.userAgent.toLowerCase(); //取得浏览器的userAgent字符串
+    return userAgent.indexOf("chrome") > -1 && userAgent.indexOf("safari") > -1; //判断Chrome浏览器
+}
+
+var ajax = {
+	init : function(){
+		var xmlHttp = new XMLHttpRequest();
+		if (!window.XMLHttpRequest)
+		xmlHttp=new ActiveXObject("Microsoft.XMLHTTP");
+		return xmlHttp;
+	},
+	call : function(opt){
+		var xmlHttp = this.init();
+		opt.type = opt.type || 'get';
+		opt.data=opt.data || null;
+		opt.url=opt.url || null;
+		opt.success= opt.success || null;
+		opt.error=opt.error || null;
+
+		if(!opt.url){return null;}
+		xmlHttp.onreadystatechange = function(){
+			if(xmlHttp.readyState===4){
+				xmlHttp.status===200 ? opt.success(xmlHttp.responseText,xmlHttp.responseXML) : opt.error(xmlHttp.responseText,xmlHttp.status);
+			}
+		}
+		opt.data = this.parseData(opt.data);
+			if(opt.type.toLowerCase() === 'get'){
+			opt.url = opt.url + "?" + opt.data;
+			opt.data = null;
+		}
+		xmlHttp.open(opt.type,opt.url,opt.async);
+			if(opt.type.toLowerCase() === 'post'){
+				xmlHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+			}
+			xmlHttp.send(opt.data);				
+		},
+		parseData : function(data){
+			if(typeof data == 'object'){
+			var str = '';
+			for(var i in data){
+				str += "&"+i+"="+encodeURIComponent(data[i]);
+			}
+			return str.length==0 ? str : str.substring(1);
+		}else{
+			return data;
+		}
+	}
+}
+
+String.prototype.format= function(){
+    //将arguments转化为数组（ES5中并非严格的数组）
+    var args = Array.prototype.slice.call(arguments);
+    var count=0;
+    //通过正则替换%s
+    return this.replace(/\$/g,function(s,i){
+        return args[count++];
+    });
+}
+
+function formatSeconds(value) {
+    let result = parseInt(value)
+    let h = Math.floor(result / 3600) < 10 ? '0' + Math.floor(result / 3600) : Math.floor(result / 3600);
+    let m = Math.floor((result / 60 % 60)) < 10 ? '0' + Math.floor((result / 60 % 60)) : Math.floor((result / 60 % 60));
+    let s = Math.floor((result % 60)) < 10 ? '0' + Math.floor((result % 60)) : Math.floor((result % 60));
+ 
+    let res = '';
+    if(h !== '00') res += `${h}时`;
+    if(h || m !== '00') res += `${m}分`;
+    res += `${s}秒`;
+    return res;
+  }
+
+function get_expiry_time(s){
+	if(s){
+		return formatSeconds(parseInt(s, 16));
+	}
+}
+
+function get_link_msg(url){
+	var res=null;
+	if(url){
+		try{
+			ajax.call({
+		    type: 'GET',  // 请求方式
+		    url: url,  // 目标资源
+		    async: false,
+		    success : function (data) {  
+		    	res=data;
+		    },
+		    error: function (e) {  
+		    	console.debug('ajax erroe, e.message=', e.message);
+		    	res= "请求出错: "+e.message;
+		    },
+		});
+		}catch(e){return '脚本无法获取正文链接内容，请使用disable-web-security模式启动chrome浏览器，或此链接已失效打不开';}
+	}return res;
+}
+
+
+
+
+
+function mencode(s){
+	if(s){
+		var temp_arr=s.match(/.{2}/g);
+		var res = '';
+		for(var i=0;i<temp_arr.length;i++){
+			res+=String.fromCharCode(parseInt(temp_arr[i], 16));
+		}
+		return res;
+	}return null;
+}
+
+
+
+function smsencode(ct){
+	ct = ct.replace(/^\s\s*/, '').replace(/\s\s*$/, '').replace('0x', '');
+	var _ct = ct;
+
+	/* part 1 */
+	var str_TP_UD_1=/0605040B8423F0|E/.exec(_ct);
+	if(str_TP_UD_1){str_TP_UD_1=str_TP_UD_1[0]; _ct=_ct.replace('0605040B8423F0|E','');}
+	else{return str_TP_UD_1;}
+	//console.debug('str_TP_UD_1', str_TP_UD_1);
+	//console.debug('_ct', _ct);
+
+	/* part 2 */
+	var len_TP_UD_2=parseInt(_ct.substr(4,2), 16);
+	var str_TP_UD_2=_ct.substr(0, 6+2*len_TP_UD_2);
+	console.debug('str_TP_UD_2', str_TP_UD_2);
+	var content_type=str_TP_UD_2.replace('B487','').replace('AF84','').replace(/[0-9A-F]{2}06[0-9A-F]{2}/,'');
+	console.debug('content_type', content_type);
+
+	/* part 3 */
+	_ct=_ct.replace(str_TP_UD_2, '');
+	var str_TP_UD_3=_ct;
+	str_TP_UD_3=str_TP_UD_3.replace(/8C[0-9A-F]{2}/,'');
+	//console.debug('str_TP_UD_3', str_TP_UD_3);
+	var transaction_id=/98(.*?00)/.exec(str_TP_UD_3)[0].replace('98','').replace('00','');
+	console.debug('transaction_id', transaction_id);
+
+	str_TP_UD_3=str_TP_UD_3.replace(/98(.*?00)/,'').replace('8D90','').replace('8A80','').replace(/8E[0-9A-F]{4}/,'');
+	//console.debug('str_TP_UD_3', str_TP_UD_3);
+
+	var expiry_time=/88[0-9A-F]{2}8103[0-9A-F]{6}/.exec(str_TP_UD_3)[0].replace(/88[0-9A-F]{2}8103/,'');
+	console.debug('expiry_time', get_expiry_time(expiry_time));
+	str_TP_UD_3=str_TP_UD_3.replace(/88[0-9A-F]{2}81[0-9A-F]{8}/,'');
+
+	var src_address=/89[0-9A-F]{2}80(.*?00)/.exec(str_TP_UD_3)[0].replace(/89[0-9A-F]{2}80/,'').replace('00', '');
+	console.debug('src_address', mencode(src_address));
+
+	str_TP_UD_3=str_TP_UD_3.replace(/89[0-9A-F]{2}(.*?00)/,'');	
+	//console.debug('str_TP_UD_3', str_TP_UD_3);
+	var content_location=/83[0-9A-F]*/.exec(str_TP_UD_3)[0].replace('83','');
+	console.debug('content_location', mencode(content_location));
+
+	return {
+		//'raw': encodeURI(mencode(ct)),
+		//'content_type': content_type,
+		//'transaction_id': mencode(transaction_id),
+		'expiry_time': get_expiry_time(expiry_time),
+		'src_address': mencode(src_address),
+		'content_location': mencode(content_location)
+	};
+
+}
+
+function smsbatchencode(s){
+	if(s){
+		var temp = s.split(/[\n]/);
+		var res = '';
+		for(var i=0;i<temp.length;i++){
+			var r = smsencode(temp[i]);
+			if(r){
+				r=JSON.stringify(r, null, 4);
+			}
+			else{r='';}
+			res +=r +'\n';
+			console.debug(i, 'r=', r);
+		}
+		return res;
+	}return null;
+}
+
+var pt='\
+<div style="float:left; width:100%;height:30px;"><span>来源：</span><span>$</span></div>\
+<div style="float:left; width:100%;height:30px;"><span>有效期：</span><span>$</span></div>\
+<div style="float:left; width:100%;height:30px;"><span>正文地址：</span><span><a href="$" target="_blank">$</a></span></div>\
+<div style="float:left; width:100%;"><span style="float:left;">正文内容：</span><div style="float:left; word-wrap: break-word;word-break: break-all;overflow: hidden;width:80%;">$</div></div>\
+';
+
+function doencode(){
+	var text = window.text1.value;
+	var res = smsencode(text);
+	if(res){
+		var link_msg=get_link_msg(res.content_location);
+		if(link_msg){
+			link_msg=link_msg.match(/[\w\u4e00-\u9fa5\/=<>\.-]*/gi);
+			link_msg=link_msg.join(' ');
+			link_msg.replace('')
+		}
+		
+		console.debug('link_msg=', link_msg);
+		window.target.innerHTML=pt.format(res.src_address.replace('/TYPE=PLMN',''),res.expiry_time,res.content_location,res.content_location,link_msg);	
+	}else{
+		alert('解析失败，目前仅支持解析0x0605040B8423F0、0x0605040B8423FE开头的彩信');
+	}
+	
+	//window.text2.value = smsbatchencode(text);
+}
+
+function init(){
+	if(is_chrome()){window.chrome_sp.style.display = "none"}
+}
+init();
+
+
+</script>
+</html>
