@@ -133,7 +133,7 @@ function fresh_progress(){
 function attention(msg){
 	try{
 		$('.info-btn .course-button').text(msg);
-		$('.info-btn .course-button')..attr('disabled',true); 
+		$('.info-btn .course-button').attr('disabled',true); 
 	}catch(err){console.debug('fresh_progress error:', err.message);}
 }
 function save_my_course(params){
