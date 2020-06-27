@@ -132,7 +132,8 @@ function fresh_progress(){
 }
 function attention(){
 	try{
-		$('.info-btn .course-button').text('正在刷课...')
+		$('.info-btn .course-button').text('正在刷课...');
+		$('.info-btn .course-button')..attr('disabled',true); 
 	}catch(err){console.debug('fresh_progress error:', err.message);}
 }
 function save_my_course(params){
