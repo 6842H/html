@@ -130,10 +130,10 @@ function fresh_progress(){
 		$('.progress-box .ant-btn.ant-btn-primary').click()
 	}catch(err){console.debug('fresh_progress error:', err.message);}
 }
-function attention(){
+function attention(msg){
 	try{
-		$('.info-btn .course-button').text('正在刷课...');
-		$('.info-btn .course-button').attr('disabled',true); 
+		$('.info-btn .course-button').text(msg);
+		$('.info-btn .course-button')..attr('disabled',true); 
 	}catch(err){console.debug('fresh_progress error:', err.message);}
 }
 function save_my_course(params){
@@ -163,6 +163,7 @@ function save_my_course(params){
 				setTimeout(function(){save_my_course(params);}, 15*1000);
 			}else{
 				console.debug('done');
+				attention('刷课完成');
 				return;				
 			}
 		},error: function() {
@@ -198,7 +199,7 @@ function init(){
 	var detailId=window.location.href.split('detail/')[1];
 	var params=get_params_by_detailId(detailId);
 	if(params){
-		attention();
+		attention('正在刷课...');
 		touch_history(params);
 		save_my_course(params);
 	}	
